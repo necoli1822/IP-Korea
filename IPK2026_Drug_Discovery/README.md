@@ -20,3 +20,8 @@ To follow:
 - [ ] `ipk2026_metagenomics_arg_pipeline.ga`, the Galaxy workflow used in the demonstration
 - [ ] Session README: how to import and run the workflow on usegalaxy.eu
 - [ ] Screen captures from the demonstration run
+
+Pipeline outputs are not committed to this directory. They are published as a single compressed
+archive attached to a release, which keeps them out of the repository history. Assemblies are
+excluded from that archive as well: they are reproducible from the run accession and the workflow
+file.
