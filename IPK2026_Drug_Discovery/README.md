@@ -1,6 +1,7 @@
-# Mastering the Art of Drug Discovery: Technologies, Tools, and Applications
+# Metagenome-based Understanding and Exploiting Resistance Genes for New Drug Targets
 
-IPK 2026 course programme. This directory holds the materials for the **Metagenomics (ARL)** session on Day 4.
+Materials for the **Metagenomics (ARL)** session, Day 4 of the IPK 2026 course
+*Mastering the Art of Drug Discovery: Technologies, Tools, and Applications*.
 
 ## Programme
 
