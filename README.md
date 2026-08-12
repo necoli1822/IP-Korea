@@ -1,1 +1,3 @@
-# IPK_2026_internship
+# IP-Korea
+
+https://www.ip-korea.org/research/labinfo.php?gb=ARL
