@@ -26,9 +26,9 @@ Those candidates are the handover. A gene with no known family is exactly the ca
 
 ## Contents of this directory
 
-To follow:
-
-- [ ] `ipk2026_metagenomics_arg_pipeline.ga`, the Galaxy workflow used in the demonstration
+- [x] `ipk2026_metagenomics_arg_pipeline.ga`, the Galaxy workflow used in the demonstration.
+      33 steps. Import it into usegalaxy.eu, supply one SRA or ENA run accession, and run.
+      The default is ERR13597805.
 - [ ] Session README: how to import and run the workflow on usegalaxy.eu
 - [ ] Screen captures from the demonstration run
 
