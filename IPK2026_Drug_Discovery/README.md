@@ -2,11 +2,11 @@
 
 Materials for the **Metagenomics (ARL)** session, Day 4 of the IPK 2026 course
 *Mastering the Art of Drug Discovery: Technologies, Tools, and Applications*.
-Thursday 27 August 2026, 90 minutes. Antibiotic Resistance Laboratory, Institut Pasteur Korea.
+Thursday 27 August 2026, 90 minutes. Antibacterial Resistance Laboratory, Institut Pasteur Korea.
 
 ## Abstract
 
-Antimicrobial resistance was directly responsible for an estimated 1.27 million deaths in 2019 and contributed to nearly five million more, and the projection for 2050 is worse on both counts. The conventional answer, to discover the next antibiotic, has been failing for two reasons that compound each other. Scientifically, target-based screening produced potent compounds that could not cross the Gram-negative outer membrane, so the bottleneck turned out to be accumulation rather than affinity. Commercially, an antibiotic is punished for working: the course is short, the patient is cured, and stewardship then asks that the best new agent be used as little as possible.
+Antimicrobial resistance was directly responsible for an estimated 1.27 million deaths in 2019 and played a part in 4.95 million, and the projection for 2050 is worse on both counts. The conventional answer, to discover the next antibiotic, has been failing for two reasons that compound each other. Scientifically, target-based screening produced potent compounds that could not cross the Gram-negative outer membrane, so the bottleneck turned out to be accumulation rather than affinity. Commercially, an antibiotic is punished for working: the course is short, the patient is cured, and stewardship then asks that the best new agent be used as little as possible.
 
 This session argues that the more tractable move is upstream. Resistance is carried by genes rather than by organisms, and those genes travel on plasmids, integrons and transposons between species that no culture plate would ever present side by side. If the transmissible unit is the gene, the unit of surveillance has to be the gene pool rather than the isolate, and that pool is invisible to culture and only partly visible to genotype-based prediction. The lecture builds this case by first defining what an antibiotic is and what a clinical breakpoint actually claims, then showing where both definitions fail: an MIC quantifies how much drug is needed, never how long nor for what fraction of the population, which is precisely where tolerance, persistence and heteroresistance operate.
 
