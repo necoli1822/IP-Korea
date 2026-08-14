@@ -10,7 +10,7 @@ Antimicrobial resistance was directly responsible for an estimated 1.27 million 
 
 This session argues that the more tractable move is upstream. Resistance is carried by genes rather than by organisms, and those genes travel on plasmids, integrons and transposons between species that no culture plate would ever present side by side. If the transmissible unit is the gene, the unit of surveillance has to be the gene pool rather than the isolate, and that pool is invisible to culture and only partly visible to genotype-based prediction. The lecture builds this case by first defining what an antibiotic is and what a clinical breakpoint actually claims, then showing where both definitions fail: an MIC quantifies how much drug is needed, never how long nor for what fraction of the population, which is precisely where tolerance, persistence and heteroresistance operate.
 
-The demonstration applies that argument to real data. A Galaxy workflow is run on metagenomes from the inlet of the Lynetten wastewater treatment plant in Copenhagen, roughly three kilometres downstream of a vancomycin manufacturing site, so that the selection pressure is a property of the location rather than an inference from the result. The workflow profiles the community, assembles it, detects known resistance genes against CARD, and then relaxes the identity threshold with a machine-learning classifier to surface genes that carry resistance-like signal but match no described family. The recovered resistome includes a complete *vanA* operon, and the low-confidence tier contains the candidates the session exists to produce.
+The demonstration applies that argument to real data. A Galaxy workflow is run on metagenomes from the inlet of the Lynetten wastewater treatment plant in Copenhagen, roughly three kilometres downstream of a vancomycin manufacturing site, so that the selection pressure is a property of the location rather than an inference from the result. The workflow profiles the community, assembles it, detects known resistance genes against CARD, and then relaxes the identity threshold with a machine-learning classifier to surface genes that carry resistance-like signal but match no described family. The recovered resistome includes a complete *vanA* gene cluster, recovered across two contigs, and the low-confidence tier contains the candidates the session exists to produce.
 
 Those candidates are the handover. A gene with no known family is exactly the case in which sequence homology has nothing further to say, which is where structure prediction, docking and molecular dynamics take over, and where cheminformatics asks what chemical space could occupy the site. Sequence identity is where this session stops, and structure is where the next one starts.
 
@@ -30,6 +30,7 @@ Those candidates are the handover. A gene with no known family is exactly the ca
 | --- | --- |
 | `ipk2026_metagenomics_arg_pipeline.ga` | The Galaxy workflow used in the demonstration. 33 steps. Import it into usegalaxy.eu, supply one SRA or ENA run accession, and run. The default is ERR13597805 |
 | `RESULTS.md` | Index of the pipeline outputs: what each step produces, how large it is, and whether it ships in the release |
+| [`Abstract.pdf`](Abstract.pdf) | The same abstract as above, on one A4 page, for printing or for a course booklet |
 
 ## Running it
 
