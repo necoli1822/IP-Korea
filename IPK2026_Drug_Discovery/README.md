@@ -33,8 +33,11 @@ Those candidates are the handover. A gene with no known family is exactly the ca
 
 ## Running it
 
-1. On [usegalaxy.eu](https://usegalaxy.eu), open **Workflow** and choose **Import**, then upload
-   the `.ga` file.
+The workflow is published on usegalaxy.eu, so the shortest route is
+[import it directly](https://usegalaxy.eu/u/ipk_arl_sjk/w/ipk2026-metagenomics-arg-pipeline).
+
+1. Or, from the file: on [usegalaxy.eu](https://usegalaxy.eu), open **Workflow**, choose
+   **Import**, and upload the `.ga`.
 2. Run it. The only input is a run accession; step 1 fetches the reads itself, and steps 23 to 25
    and 34 to 35 fetch the Pfam database BiG-SCAPE needs, so nothing has to be uploaded by hand.
 3. The three samples of the series are ERR13597805, ERR13597803 and ERR13597804. Change the
