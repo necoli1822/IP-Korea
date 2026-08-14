@@ -53,6 +53,57 @@ proteins and their nucleotide sequences, the whole contigs they sit on, remote B
 NCBI lookups for the best hits, the PyMOL superposition of the predicted structures against their
 references, and the two scripts that draw the site map and the Venn diagram.
 
+## Attribution
+
+Some of what is in here is derived from reference data that carries its own terms. Credit is
+required in every case, and one of them restricts commercial use.
+
+### CARD
+
+`card_gene_family_map.tsv`, the `NUM_FOUND` normalisation in `step21`, `step28`, `step40` and
+`step41`, and the `PRODUCT` and `ACCESSION` fields of every ABRicate report are derived from the
+Comprehensive Antibiotic Resistance Database, curated at McMaster University. The ontology files
+CARD publishes, which include `aro_index.tsv`, are released under CC BY 4.0; the rest of CARD is
+free for academic, government and non-profit use and requires written permission from McMaster
+University for commercial use. Anyone reusing these files commercially should go to CARD rather
+than assume this archive settles the question.
+
+> Alcock BP, Huynh W, Chalil R, et al. CARD 2023: expanded curation, support for machine learning,
+> and resistome prediction at the Comprehensive Antibiotic Resistance Database. Nucleic Acids Res.
+> 2023;51(D1):D690-9. doi:10.1093/nar/gkac920
+
+### AlphaFold Protein Structure Database
+
+`downstream/structures/TETW_ref_AF.pdb` and `TET39_ref_AF.pdb` were downloaded from AlphaFold DB
+and are used under CC BY 4.0. The other 25 structures in that directory were predicted here with
+ESMFold from the sequences the pipeline recovered.
+
+> Varadi M, Bertoni D, Magana P, et al. AlphaFold Protein Structure Database in 2024: providing
+> structure coverage for over 214 million protein sequences. Nucleic Acids Res. 2024;52(D1):D368-75.
+> doi:10.1093/nar/gkad1011
+>
+> Jumper J, Evans R, Pritzel A, et al. Highly accurate protein structure prediction with AlphaFold.
+> Nature. 2021;596(7873):583-9. doi:10.1038/s41586-021-03819-2
+>
+> Lin Z, Akin H, Rao R, et al. Evolutionary-scale prediction of atomic-level protein structure with
+> a language model. Science. 2023;379(6637):1123-30. doi:10.1126/science.ade2574
+
+### ARG-ANNOT and argNorm
+
+Branch A calls names its genes in ARG-ANNOT's vocabulary. The table that translates those names
+into CARD gene families is chained from argNorm's published `groot_ARO_mapping.tsv`
+(github.com/BigDataBiology/argNorm, MIT) and CARD's `aro_index.tsv`.
+
+> Gupta SK, Padmanabhan BR, Diene SM, et al. ARG-ANNOT, a new bioinformatic tool to discover
+> antibiotic resistance genes in bacterial genomes. Antimicrob Agents Chemother. 2014;58(1):212-20.
+> doi:10.1128/AAC.01310-13
+
+### Map tiles
+
+`downstream/make_map.py` draws its basemap from CartoDB Positron tiles at run time. Any image it
+produces has to carry "Basemap © OpenStreetMap contributors © CARTO", which the script writes into
+the figure itself. The tiles are not redistributed here.
+
 ## Distribution
 
 The two assembly steps account for 700 MB of the 777 MB here and exceed GitHub's 100 MB per-file
