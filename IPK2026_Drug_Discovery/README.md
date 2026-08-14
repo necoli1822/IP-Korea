@@ -26,13 +26,33 @@ Those candidates are the handover. A gene with no known family is exactly the ca
 
 ## Contents of this directory
 
-- [x] `ipk2026_metagenomics_arg_pipeline.ga`, the Galaxy workflow used in the demonstration.
-      33 steps. Import it into usegalaxy.eu, supply one SRA or ENA run accession, and run.
-      The default is ERR13597805.
-- [ ] Session README: how to import and run the workflow on usegalaxy.eu
-- [ ] Screen captures from the demonstration run
+| File | What it is |
+| --- | --- |
+| `ipk2026_metagenomics_arg_pipeline.ga` | The Galaxy workflow used in the demonstration. 33 steps. Import it into usegalaxy.eu, supply one SRA or ENA run accession, and run. The default is ERR13597805 |
+| `RESULTS.md` | Index of the pipeline outputs: what each step produces, how large it is, and whether it ships in the release |
 
-Pipeline outputs are not committed to this directory. They are published as a single compressed
-archive attached to a release, which keeps them out of the repository history. Assemblies are
-excluded from that archive as well: they are reproducible from the run accession and the workflow
-file.
+## Running it
+
+1. On [usegalaxy.eu](https://usegalaxy.eu), open **Workflow** and choose **Import**, then upload
+   the `.ga` file.
+2. Run it. The only input is a run accession; step 1 fetches the reads itself, and steps 23 to 25
+   and 34 to 35 fetch the Pfam database BiG-SCAPE needs, so nothing has to be uploaded by hand.
+3. The three samples of the series are ERR13597805, ERR13597803 and ERR13597804. Change the
+   accession and rerun to process each.
+
+A full run takes hours, mostly in MEGAHIT and antiSMASH. The outputs of the three runs are attached
+to the latest release, so the results can be read without waiting for a run to finish.
+
+## Outputs
+
+Pipeline outputs are not committed to this directory. They are published as one compressed archive
+attached to a [release](https://github.com/necoli1822/IP-Korea/releases), which keeps them out of
+the repository history. The assemblies are excluded from that archive: they run to 700 MB, exceed
+GitHub's per-file limit, and are reproducible from the run accession and the workflow file.
+`RESULTS.md` lists exactly what the archive holds.
+
+## Data
+
+Samples come from the influent of the Lynetten wastewater treatment plant, Refshalevej 250,
+Copenhagen, about 3.2 km downstream of a vancomycin API manufacturing plant, BioProject
+[PRJEB79372](https://www.ebi.ac.uk/ena/browser/view/PRJEB79372).

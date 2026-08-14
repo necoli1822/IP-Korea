@@ -1,6 +1,6 @@
 {
     "a_galaxy_workflow": "true",
-    "annotation": "Metagenomics pipeline: taxonomic profiling + known ARG detection (ABRicate/CARD on contigs + GROOT/ARG-ANNOT on reads) + novel drug target discovery (antiSMASH/BiG-SCAPE/ARTS). Dataset: PRJNA781406 (glacier-fed stream biofilm, Vanishing Glaciers Project; Busi/Kohler/Battin et al. 2023, Microbiology Spectrum, PMC9927545) — switched 2026-07-12 from the original PRJNA717813 (Schönbuch Forest soil, mSystems 2021) after the forest soil sample produced zero known-ARG hits. Connects to IPK2026 #16 Transcriptomics, #17 Cheminformatics, #18 AI for Drug Discovery.",
+    "annotation": "Metagenomics pipeline for the IPK2026 lecture 'Metagenome-based Understanding and Exploiting Resistance Genes for New Drug Targets'. Taxonomic profiling (Kraken2/Bracken/Krona), known ARG detection on two branches (ABRicate/CARD on MEGAHIT contigs, GROOT/ARG-ANNOT on reads), candidate novel resistance genes with DeepARG, and BGC mining with antiSMASH/BiG-SCAPE. Dataset PRJEB79372: Lynetten WWTP inlet, Copenhagen, about 3.2 km downstream of a vancomycin API manufacturing plant. Samples CPH1042 (ERR13597805), CPH1025 (ERR13597803), CPH1051 (ERR13597804).",
     "comments": [],
     "creator": [
         {
@@ -13,13 +13,13 @@
     "format-version": "0.1",
     "license": "MIT",
     "name": "IPK2026_Metagenomics_ARG_Pipeline",
-    "readme": "# IPK2026 Metagenomics — BGC & Drug Target Discovery Pipeline\n\nMetagenomics pipeline for taxonomic profiling, known ARG detection, and novel drug target discovery via biosynthetic gene cluster (BGC) mining.\n\n## Dataset\nPRJNA781406 (Vanishing Glaciers Project — glacier-fed stream biofilms; Busi/Kohler/Battin et al. 2023, Microbiology Spectrum, PMC9927545)\n- Default sample: SRR14689470 (GL_R17_GL16_UP_1), one of 21 confirmed samples from 8 glacier sites (GL5, GL11, GL15, GL16 New Zealand; GL46, GL47, GL53, GL56 Russian Caucasus)\n- Illumina NovaSeq 6000, 151bp paired-end, ~96.5M reads (smallest of the 21 confirmed samples)\n- Original paper confirms BOTH known-ARG signal (1,840 ARGs via CARD-based PathoFact/RGI/DeepARG) AND BGC signal (91% of 490 MAGs via antiSMASH+deepBGC+GECCO) in this same dataset\n- Switched 2026-07-12 from the original PRJNA717813 (Schönbuch Forest soil, mSystems 2021), which produced 0 ABRicate/CARD hits at 80-90% identity even from a 1.4Gbp assembly (see WORKFLOW_VERIFICATION.md section 7.10-7.11 for the diagnostic trail and dataset-selection reasoning)\n\n## Input\nProvide Illumina NovaSeq paired-end FASTQ collection from PRJNA781406.\nRun fasterq-dump with SRR accessions first, then select 'Paired-end data' collection.\nPfam-A.hmm database file required for BiG-SCAPE (step 16).\n\n## Pipeline\n\n### Taxa Profiling\nfastp → Kraken2 (PlusPF) → Bracken → kreport2krona → Krona (multi-sample)\n- Alpha diversity (Shannon H')\n- Beta diversity (Bray-Curtis)\n\n### Known ARG Pool (→ IPK2026 #16 Transcriptomics)\n- Branch A: fastp reads (forward only) → GROOT (arg-annot) → CARD family normalize\n- Branch B: MEGAHIT contigs → ABRicate/CARD → ABRicate Summary\n- Branch A vs B comparison: method-sensitivity check (reads-only / contigs-only ARGs)\n\n### Novel Drug Target Discovery (→ IPK2026 #17 Cheminformatics, #18 AI)\n1. MEGAHIT → antiSMASH (BGC prediction + MIBiG comparison + RRE)\n2. BiG-SCAPE (BGC novelty — Gene Cluster Family clustering with --mibig)\n3. Branch C: antiSMASH GenBank → ABRicate/CARD (BGC-encoded ARGs)\n4. ABRicate Summary → zero-hit guard → Transpose → ARG Name Normalization (awk, CARD ARO Gene Family):\n   - TEM-1, TEM-15 → TEM beta-lactamase (same family → join matches correctly)\n5. Join unmatched: BGC ARGs NOT in assembly ARG pool = BGC-exclusive ARGs\n   = Self-resistance gene candidates = NOVEL DRUG TARGETS\n\n## ARG Name Standardization\nBoth ABRicate runs use the same CARD database version, ensuring name consistency.\nThe normalization step (awk) maps every gene name to its CARD ARO AMR Gene Family (built from CARD's own aro_index.tsv), so allele-level variants join correctly.\n\n## IPK2026 Lecture Connections\n- #14 Hit-to-Lead: Predicted drug targets → HTS design\n- #15 Natural Products: BGC → compound structure prediction\n- #16 Transcriptomics: Known ARGs → resistance mechanism understanding\n- #17 Cheminformatics: Drug target → molecular docking → virtual screening\n- #18 AI for Drug Discovery: Drug target → AI-based binding prediction\n\n## Platform\nusegalaxy.eu",
+    "readme": "# IPK2026 Metagenomics: resistance genes and BGC-derived drug targets\n\nTaxonomic profiling, known ARG detection, candidate novel resistance genes, and novel drug\ntarget discovery through biosynthetic gene cluster (BGC) mining. 33 steps, run on\nusegalaxy.eu.\n\n## Dataset\nPRJEB79372, influent of the Lynetten wastewater treatment plant, Refshalevej 250,\nCopenhagen. The inlet sits about 3.2 km downstream of a vancomycin API manufacturing plant,\nso the selection pressure is a property of the address rather than of a patient.\n\n| Sample | Run | Collected |\n|---|---|---|\n| CPH1042 | ERR13597805 | September 2022 |\n| CPH1025 | ERR13597803 | October 2022 |\n| CPH1051 | ERR13597804 | January 2023 |\n\nIllumina paired-end. Each run is processed independently, so every numbered output exists\nthree times.\n\n## Input\nOne SRA/ENA run accession into the `SRR_Accession` parameter. Step 1 fetches the reads with\nfasterq-dump, so nothing has to be uploaded by hand. BiG-SCAPE (step 15) needs Pfam-A.hmm,\nwhich steps 23 to 25 and 34 to 35 download and prepare inside the workflow.\n\n## Pipeline\n\n### Taxonomic profiling\nfastp -> Kraken2 (PlusPF) -> Bracken -> kreport2krona -> Krona, plus alpha diversity\n(Shannon) and beta diversity (Bray-Curtis).\n\n### Known ARG pool\n- Branch A: fastp reads (forward only) -> GROOT (ARG-ANNOT) -> CARD family normalisation\n- Branch B: MEGAHIT contigs -> ABRicate/CARD -> ABRicate Summary -> transpose ->\n  CARD ARO family normalisation\n- Both branches are deduplicated by CARD AMR gene family before they are compared, so\n  TEM-1 and TEM-15 count once as TEM beta-lactamase\n- Steps 29 and 30 report reads-only and contigs-only families, which is the method\n  sensitivity check\n\n### Candidate novel resistance genes\nDeepARG-LS on the contigs (minimum probability 0.8, minimum identity 50) finds sequences\nthat fall below the 80 % identity ABRicate needs. Step 39 pulls the whole contig for every\ncandidate, not just the aligned fragment, so the gene neighbourhood travels downstream.\n\n### Novel drug targets from BGCs\n1. MEGAHIT contigs >= 1 kb -> antiSMASH (BGC prediction, MIBiG comparison, RRE)\n2. BiG-SCAPE with --mibig for gene cluster family novelty\n3. Branch C: antiSMASH GenBank -> ABRicate/CARD for BGC-encoded ARGs\n4. BGC ARGs that are absent from the assembly ARG pool are self-resistance gene candidates,\n   which is where a target for a new compound would come from\n\n## ARG name standardisation\nBoth ABRicate runs use the same CARD version. The awk normalisation step maps every gene\nname onto its CARD ARO AMR gene family, built from CARD's own aro_index.tsv, so allele\nlevel variants join correctly instead of inflating the count.\n\n## Platform\nusegalaxy.eu\n",
     "report": {
-        "markdown": "# IPK2026 Metagenomics ARG Pipeline Results\n\n## Workflow\n```galaxy\nworkflow_display()\n```\n\n## Taxa Profiling (Krona)\n```galaxy\nhistory_dataset_display(output=\"krona_chart\")\n```\n\n## ARG Detection — Branch A (reads-based)\n```galaxy\nhistory_dataset_display(output=\"abricate_reads_summary\")\n```\n\n## ARG Detection — Branch B (assembly-based)\n```galaxy\nhistory_dataset_display(output=\"abricate_contigs_summary\")\n```\n\n## ARG Detection — Branch C (BGC sequences)\n```galaxy\nhistory_dataset_display(output=\"abricate_bgc_summary\")\n```\n\n## Novel Drug Targets (BGC-exclusive ARGs)\n```galaxy\nhistory_dataset_display(output=\"novel_drug_targets\")\n```\n"
+        "markdown": "# IPK2026 Metagenomics ARG Pipeline Results\n\n## Workflow\n```galaxy\nworkflow_display()\n```\n\n## Taxa Profiling (Krona)\n```galaxy\nhistory_dataset_display(output=\"krona_chart\")\n```\n\n## Known ARGs, Branch A (reads)\n```galaxy\nhistory_dataset_display(output=\"abricate_reads_summary\")\n```\n\n## Known ARGs, Branch B (contigs)\n```galaxy\nhistory_dataset_display(output=\"abricate_contigs_summary\")\n```\n\n## Known ARGs, Branch C (BGC sequences)\n```galaxy\nhistory_dataset_display(output=\"abricate_bgc_summary\")\n```\n\n## Novel Drug Targets (BGC-exclusive ARGs)\n```galaxy\nhistory_dataset_display(output=\"novel_drug_targets\")\n```\n"
     },
     "steps": {
         "0": {
-            "annotation": "SRR/DRR/ERR accession number. Default: SRR14689470 (GL_R17_GL16_UP_1, glacier-fed stream biofilm, PRJNA781406, Busi/Kohler/Battin et al. 2023 Microbiology Spectrum PMC9927545). Chosen 2026-07-12 to replace the original PRJNA717813 forest soil sample, which showed 0 ABRicate/CARD hits at 80-90% identity in the assembled contigs even from a 1.4Gbp assembly — the original paper for THIS dataset confirms both resistome (1,840 ARGs via CARD-based PathoFact/RGI/DeepARG) and BGC (91% of MAGs via antiSMASH+deepBGC+GECCO) signal are present. Verified directly against the paper's own supplementary Table S5 (BioSample accessions) that this exact run is among the 21 samples/8 sites actually analyzed in that paper (not just anywhere in the broader 2,240-run BioProject). Reads are 151bp (confirmed by downloading and inspecting the raw FASTQ directly) — functionally identical to the previous 150bp assumption, so GROOT windowSize/Bracken kmer_distr choices made earlier still apply unchanged. Read depth ~96.5M reads (paired), smallest of the paper's 21 samples, chosen to keep assembly runtime manageable for a live demo.",
+            "annotation": "SRA or ENA run accession. Default ERR13597805 (CPH1042, September 2022), influent of the Lynetten wastewater treatment plant, Copenhagen, PRJEB79372. The other two runs of the series are ERR13597803 (CPH1025, October 2022) and ERR13597804 (CPH1051, January 2023). Change this value and rerun to process them.",
             "content_id": null,
             "errors": null,
             "id": 0,
@@ -34,16 +34,16 @@
             },
             "post_job_actions": {},
             "tool_id": null,
-            "tool_state": "{\"parameter_type\": \"text\", \"optional\": false, \"default\": \"SRR14689470\"}",
+            "tool_state": "{\"parameter_type\": \"text\", \"optional\": false, \"default\": \"ERR13597805\"}",
             "tool_version": null,
             "type": "parameter_input",
             "uuid": "e50e0cc4-a96b-495c-8aed-5430a867d6f1",
             "when": null,
             "workflow_outputs": [],
-            "default_value": "SRR14689470"
+            "default_value": "ERR13597805"
         },
         "2": {
-            "annotation": "Quality control: adapter trimming + low-quality read filtering. Q20 filter, min length 50bp. Paired collection mode.",
+            "annotation": "Quality control: adapter trimming and removal of low-quality reads, Q20, minimum length 50 bp, run in paired mode so mates stay together. Everything after this point sees trimmed reads.",
             "content_id": "toolshed.g2.bx.psu.edu/repos/iuc/fastp/fastp/1.3.5+galaxy0",
             "errors": null,
             "id": 2,
@@ -102,7 +102,7 @@
             ]
         },
         "3": {
-            "annotation": "Taxonomic classification via k-mer matching. DB: PlusPF 2022-06-07 (bacteria+archaea+viral+protozoa+fungi). Confidence: 0.1.",
+            "annotation": "Assigns a taxon to each read by exact k-mer matching against PlusPF 2022-06-07 (bacteria, archaea, viruses, protozoa, fungi), confidence 0.1. The first line of the report is the one worth reading: it counts the reads that matched nothing.",
             "content_id": "toolshed.g2.bx.psu.edu/repos/iuc/kraken2/kraken2/2.1.1+galaxy1",
             "errors": null,
             "id": 3,
@@ -159,7 +159,7 @@
             "workflow_outputs": []
         },
         "4": {
-            "annotation": "Bayesian re-estimation of species-level abundances from Kraken2 report. read_length: 150bp, level: S (species), threshold: 10 reads. [2026-07-10 fix: kmer_distr corrected to match Kraken2's actual database (PlusPF, Version 2022-06-07) — was pointing to an unrelated PlusPF-8/2024-01-12 entry, which would have made Bracken's abundance re-estimation scientifically invalid even though it would not have crashed. Stale 'database'/'length' keys removed (not real params in bracken 3.1+galaxy0, only kmer_distr is). Read:100 is the closest available option; no PlusPF/150 build exists on usegalaxy.eu as of this check.] [2026-07-10 caveat: kmer_distr uses the 100bp PlusPF/2022-06-07 build (matching Kraken2's DB) because no 150bp PlusPF option exists on usegalaxy.eu. Bracken's own manual documents building per-read-length distributions but does not address substituting the nearest available length — this is a pragmatic approximation, not an officially validated equivalence. Present as such, not as fully correct.]",
+            "annotation": "Re-estimates species-level abundance from the Kraken2 report, because Kraken2 leaves many reads assigned only to a higher rank. Species level, threshold 10 reads. The k-mer distribution is the 100 bp build of the same PlusPF database; no 150 bp build exists on usegalaxy.eu, so the nearest available length is used and the abundances should be read as close rather than exact.",
             "content_id": "toolshed.g2.bx.psu.edu/repos/iuc/bracken/est_abundance/3.1+galaxy0",
             "errors": null,
             "id": 4,
@@ -217,7 +217,7 @@
             ]
         },
         "5": {
-            "annotation": "Interactive hierarchical pie chart. Bracken report converted to Krona format via Krakentools.",
+            "annotation": "Interactive hierarchical chart of the Bracken abundances. Useful in a talk because it makes the size of the unclassified fraction obvious at a glance.",
             "content_id": "toolshed.g2.bx.psu.edu/repos/crs4/taxonomy_krona_chart/taxonomy_krona_chart/2.7.1+galaxy0",
             "errors": null,
             "id": 5,
@@ -276,7 +276,7 @@
             ]
         },
         "7": {
-            "annotation": "BRANCH B — De novo assembly before ARG detection. min-contig-len: 500bp. [2026-07-10 fix: switched to MEGAHIT's --presets meta-large equivalent (min_count=1, k_min=27, k_max=127, k_step=10) — MEGAHIT's own README explicitly recommends meta-large \"if the metagenome is complex (i.e., bio-diversity is high, for example soil metagenomes)\", and the Galaxy wrapper's own --k-min help text says the same for soil data. Previous config (min_count=2, 8-value k_list) was MEGAHIT's plain default, mislabeled in this annotation as \"meta-sensitive preset\" — it was neither preset.]",
+            "annotation": "De novo assembly of the trimmed reads, minimum contig length 500 bp, with the settings MEGAHIT recommends for complex metagenomes (min_count 1, k from 27 to 127 in steps of 10). Assembly is what makes gene-level calls possible: a 150 bp read rarely covers a resistance gene end to end.",
             "content_id": "toolshed.g2.bx.psu.edu/repos/iuc/megahit/megahit/1.2.9+galaxy2",
             "errors": null,
             "id": 7,
@@ -329,7 +329,7 @@
             "workflow_outputs": []
         },
         "8": {
-            "annotation": "BRANCH B — Assembly-based ARG detection (precise, high specificity). Screens assembled contigs (>=500bp) against CARD DB. [2026-07-10 fix: min_dna_id 90.0 -> 80.0, ABRicate's own documented default (bin/abricate DEFAULT=>80), to avoid missing 80-90% identity CARD variants.]",
+            "annotation": "Branch B, the strict method. Screens the assembled contigs against CARD at a minimum nucleotide identity of 80, which is ABRicate's own default and low enough to keep variants that a 90 threshold would discard. High specificity, and blind to anything without a described relative in the database.",
             "content_id": "toolshed.g2.bx.psu.edu/repos/iuc/abricate/abricate/1.4.0",
             "errors": null,
             "id": 8,
@@ -340,7 +340,7 @@
                 }
             },
             "inputs": [],
-            "label": "ABRicate — Branch B (contigs)",
+            "label": "ABRicate, Branch B (contigs)",
             "name": "ABRicate",
             "outputs": [
                 {
@@ -375,7 +375,7 @@
             ]
         },
         "11": {
-            "annotation": "MERGE & COMPARISON — Summarize assembly-based ABRicate reports across all samples. Shows which ARGs are present per sample (contig method). Compare with Branch A summary for method-specific ARGs.",
+            "annotation": "Collects the per-sample ABRicate reports into one table: which genes were found, in which sample, by the contig-based method. This is the table Branch A is compared against.",
             "content_id": "toolshed.g2.bx.psu.edu/repos/iuc/abricate/abricate_summary/1.4.0",
             "errors": null,
             "id": 11,
@@ -386,7 +386,7 @@
                 }
             },
             "inputs": [],
-            "label": "ABRicate Summary — Branch B (contigs)",
+            "label": "ABRicate Summary, Branch B (contigs)",
             "name": "ABRicate",
             "outputs": [
                 {
@@ -429,7 +429,7 @@
             ]
         },
         "12": {
-            "annotation": "Alpha diversity (Shannon entropy) per sample from Bracken abundance table (step 4 output). param: --filename (tabular). Measures within-sample taxa richness across soil types/horizons.",
+            "annotation": "Shannon diversity per sample from the Bracken abundance table. Answers how varied one sample is on its own.",
             "content_id": "toolshed.g2.bx.psu.edu/repos/iuc/krakentools_alpha_diversity/krakentools_alpha_diversity/1.2.1+galaxy0",
             "errors": null,
             "id": 12,
@@ -483,7 +483,7 @@
             ]
         },
         "13": {
-            "annotation": "Beta diversity (Bray-Curtis) across all samples from Bracken abundance table (step 4 output). params: --inputs (tabular, multiple), --type via conditional sample (value=bracken, case 2). Shows taxa composition differences between soil types/horizons.",
+            "annotation": "Bray-Curtis dissimilarity between samples from the Bracken abundance table. Answers how far apart two sampling dates are in composition, which matters here because the three samples are the same inlet at three times of year.",
             "content_id": "toolshed.g2.bx.psu.edu/repos/iuc/krakentools_beta_diversity/krakentools_beta_diversity/1.2.1+galaxy0",
             "errors": null,
             "id": 13,
@@ -537,7 +537,7 @@
             ]
         },
         "14": {
-            "annotation": "BGC prediction on MEGAHIT contigs. input=infile (bgruening/antismash XML). cc_mibig+cb_knownclusters: MIBiG 3.x comparison. smcog_trees: biosynthetic gene families. genbank output (collection) → BiG-SCAPE. html+genbank → ARTS web server (arts.ziemertlab.com). [2026-08-02 수정: cb_general(ClusterBlast) 및 cb_subclusters(SubClusterBlast) 비활성화 — antiSMASH 공식 문서가 'disabled by default because it increases runtime significantly'라 명시한 옵션이며, 다운스트림(BiG-SCAPE/ABRicate)이 이 결과를 소비하지 않아 순수 HTML 리포트용 정보였음. cb_knownclusters/cc_mibig(MIBiG 비교, antiSMASH 기본값 ON)는 강의 내러티브에 필요해 유지. GL56_UP1/UP2 재실행에서 antiSMASH가 4일 넘게 안 끝나 조사 후 결정 (WORKFLOW_VERIFICATION.md 참고).",
+            "annotation": "Predicts biosynthetic gene clusters on the assembled contigs and compares them with MIBiG, so a cluster can be called known or novel. ClusterBlast and SubClusterBlast are left off: antiSMASH documents them as disabled by default because they cost a great deal of runtime, and nothing downstream consumes them. The GenBank output feeds BiG-SCAPE and Branch C.",
             "content_id": "toolshed.g2.bx.psu.edu/repos/bgruening/antismash/antismash/6.1.1+galaxy1",
             "errors": null,
             "id": 14,
@@ -595,7 +595,7 @@
             ]
         },
         "15": {
-            "annotation": "Clusters BGCs into Gene Cluster Families (GCFs) based on domain-content similarity among the sample's own antiSMASH-detected BGCs. inputs: inputdir (antiSMASH genbank collection) + pfam_dir (Pfam-A.hmm, hmm3 format). cutoff repeat --cutoffs=0.3. [2026-07-18 fix: --mibig disabled. BiG-SCAPE 1.1.9's container has a deterministic bug — it tries to lazily unzip its bundled MIBiG reference into its own read-only site-packages directory on every run, confirmed via source (bigscape.py v1.1.9 lines 2305-2349, no CLI/env override exists) and a matching unresolved Galaxy help-forum report. No newer Galaxy wrapper or alternative (e.g. BiG-SLICE) is available on usegalaxy.eu. This is NOT a functional loss for the 'known vs novel compound' question though: antiSMASH (Step 14) already runs its own MIBiG comparison per-BGC via cb_knownclusters/cc_mibig, independent of BiG-SCAPE and unaffected by this bug. BiG-SCAPE's remaining (and genuinely unique) contribution is cross-BGC family clustering + network visualization among this sample's own BGCs, which doesn't need MIBiG.] Use html+tsv output + antiSMASH genbank with ARTS (arts.ziemertlab.com) to find self-resistance genes → Novel Drug Targets (→ IPK2026 #17 Cheminformatics).",
+            "annotation": "Groups the sample's own biosynthetic gene clusters into gene cluster families by domain content, with a cutoff of 0.3, and draws the network. Needs Pfam-A.hmm, which steps 23 to 25 and 34 to 35 fetch and prepare. The MIBiG comparison is not requested here because antiSMASH has already done it per cluster; what this step adds is the relationship between clusters.",
             "content_id": "toolshed.g2.bx.psu.edu/repos/iuc/bigscape/bigscape/1.1.9+galaxy2",
             "errors": null,
             "id": 15,
@@ -666,7 +666,7 @@
             ]
         },
         "9": {
-            "annotation": "Convert Bracken report (Kraken-style) to Krona-compatible text format.",
+            "annotation": "Converts the Bracken report into the format Krona reads.",
             "content_id": "toolshed.g2.bx.psu.edu/repos/iuc/krakentools_kreport2krona/krakentools_kreport2krona/1.2.1+galaxy0",
             "errors": null,
             "id": 9,
@@ -706,7 +706,7 @@
             "workflow_outputs": []
         },
         "19": {
-            "annotation": "Transpose Assembly ABRicate Summary (Branch B, step 11): rows ↔ cols. After transpose, col 1 = gene names (CARD ARGs found in full metagenome assembly). Required for gene-level join comparison.",
+            "annotation": "Transposes the Branch B summary so that column 1 holds gene names. The join steps compare column 1 against column 1, so both branches have to arrive in that shape.",
             "content_id": "toolshed.g2.bx.psu.edu/repos/iuc/table_compute/table_compute/1.2.4+galaxy2",
             "errors": null,
             "id": 19,
@@ -717,7 +717,7 @@
                 }
             },
             "inputs": [],
-            "label": "Transpose — Assembly ARG summary",
+            "label": "Transpose, Branch B summary",
             "name": "Table Compute",
             "outputs": [
                 {
@@ -754,7 +754,7 @@
             "workflow_outputs": []
         },
         "21": {
-            "annotation": "ARG NAME STANDARDIZATION via CARD ARO Gene Family mapping (CARD v3.3.0, 5,370 entries). Maps every CARD gene name to its ARO AMR Gene Family: TEM-1 → TEM beta-lactamase, TEM-15 → TEM beta-lactamase (same family → join matches correctly). Without this: TEM-1 vs TEM-15 treated as different genes → false novel drug targets. Mapping built from CARD aro_index.tsv + FASTA headers via ARO accession linking (100% coverage). Fallback: toupper() for any gene not in CARD (e.g. novel/custom DB entries). Branch: Assembly.",
+            "annotation": "Maps every CARD gene name onto its ARO AMR gene family, built from CARD's own aro_index.tsv. TEM-1 and TEM-15 both become TEM beta-lactamase, so the two branches join on the mechanism rather than on the allele. Without this step the same family appears on both sides under different names and is reported as a difference that does not exist. Anything absent from CARD falls back to its upper-cased name.",
             "content_id": "toolshed.g2.bx.psu.edu/repos/bgruening/text_processing/tp_awk_tool/1.1.2",
             "errors": null,
             "id": 21,
@@ -765,7 +765,7 @@
                 }
             },
             "inputs": [],
-            "label": "CARD ARO Normalize — Assembly",
+            "label": "CARD ARO Normalize, Branch B",
             "name": "Text reformatting with awk",
             "outputs": [
                 {
@@ -802,7 +802,7 @@
             "workflow_outputs": []
         },
         "1": {
-            "annotation": "Download paired-end FASTQ from SRA. Output: 'Pair-end data (fasterq-dump)' (list:paired collection).",
+            "annotation": "Fetches the run from SRA as paired-end FASTQ, so nothing has to be uploaded by hand. Output is a list:paired collection, which is the shape every downstream step expects.",
             "content_id": "toolshed.g2.bx.psu.edu/repos/iuc/sra_tools/fasterq_dump/3.1.1+galaxy1",
             "errors": null,
             "id": 1,
@@ -816,7 +816,7 @@
                 {
                     "name": "input|accession",
                     "description": "runtime parameter for tool Faster Download and Extract Reads in FASTQ",
-                    "default_value": "SRR14689470",
+                    "default_value": "ERR13597805",
                     "default_value_set": true
                 }
             ],
@@ -837,7 +837,7 @@
             "workflow_outputs": []
         },
         "23": {
-            "annotation": "Creates a text file with the EBI Pfam-A.hmm.gz URL for automated download by lftp.",
+            "annotation": "Writes the EBI URL of Pfam-A.hmm.gz to a file, so the download in the next step needs no manual upload.",
             "content_id": "toolshed.g2.bx.psu.edu/repos/bgruening/text_processing/tp_text_file_with_recurring_lines/9.5+galaxy3",
             "errors": null,
             "id": 23,
@@ -860,7 +860,7 @@
             "workflow_outputs": []
         },
         "24": {
-            "annotation": "Downloads Pfam-A.hmm.gz from EBI FTP. Output is a list collection containing the compressed HMM database.",
+            "annotation": "Downloads Pfam-A.hmm.gz from the EBI FTP server. BiG-SCAPE needs it and usegalaxy.eu does not carry it as a reference dataset.",
             "content_id": "lftp",
             "errors": null,
             "id": 24,
@@ -888,7 +888,7 @@
             "workflow_outputs": []
         },
         "25": {
-            "annotation": "Extracts Pfam-A.hmm.gz from the lftp download collection (still gzip-compressed at this point; decompression happens in the next step).",
+            "annotation": "Pulls the compressed HMM database out of the download collection. It is still gzipped at this point.",
             "content_id": "__EXTRACT_DATASET__",
             "errors": null,
             "id": 25,
@@ -916,7 +916,7 @@
             "workflow_outputs": []
         },
         "26": {
-            "annotation": "BRANCH A (fix) — Extract forward reads only from the fastp paired collection. GROOT's --fastq input is a single dataset, not a paired collection, so one mate is used for k-mer/LSH-based read classification (pairing is not required for GROOT's approach).",
+            "annotation": "Branch A takes a single FASTQ, not a pair, because GROOT classifies each read independently against a graph. This step extracts the forward mate from the fastp collection.",
             "content_id": "__EXTRACT_DATASET__",
             "errors": null,
             "id": 26,
@@ -953,7 +953,7 @@
             "workflow_outputs": []
         },
         "27": {
-            "annotation": "BRANCH A — Read-based ARG detection (fast, high sensitivity, no assembly). GROOT classifies reads directly against ARG variation graphs via LSH-forest k-mer search + local alignment (Rowe & Winn 2018, doi:10.1093/bioinformatics/bty387). windowSize=150 to match this dataset's actual read length (NovaSeq PE150, same length used by the Bracken step) per GROOT's own recommendation (index window ~= max read length). Database: arg-annot (90% identity), the only groot_database installed on usegalaxy.eu. Output gene IDs are in ARG-ANNOT's own nomenclature; normalized to CARD AMR Gene Family in the next step for comparability with Branch B/C. [2026-07-10 fix: switched from covCutoff=0.97 to --lowCov. GROOT's own tutorial only documents a binary real-data choice (-c 1 strict full-length vs --lowCov for genes not covered at the 5'/3' ends) — no fractional cutoff is demonstrated for real (non-toy) data. Real soil metagenomic coverage is uneven, matching exactly the scenario GROOT's own tutorial used --lowCov for.]",
+            "annotation": "Branch A, the sensitive method. Classifies reads directly against ARG variation graphs, with no assembly step in between, using the ARG-ANNOT database, the only one installed on usegalaxy.eu. Window size 150 to match the read length, and --lowCov because coverage in an environmental sample is uneven and genes are often not covered at their ends. Gene names come out in ARG-ANNOT's vocabulary and are translated in the next step.",
             "content_id": "toolshed.g2.bx.psu.edu/repos/iuc/groot/groot/1.1.2+galaxy2",
             "errors": null,
             "id": 27,
@@ -1001,7 +1001,7 @@
             "workflow_outputs": []
         },
         "28": {
-            "annotation": "ARG-ANNOT→CARD Family Normalize — Branch A. Maps GROOT/ARG-ANNOT reference gene IDs to the same CARD AMR Gene Family vocabulary used by Branch B/C, so Branch A is directly comparable (method-sensitivity check: reads vs contigs). Mapping built by chaining two public reference tables (no argnorm tool run needed, same technique as the CARD ARO normalize steps): (1) argNorm's groot_ARO_mapping.tsv (github.com/BigDataBiology/argNorm) maps GROOT arg-annot reference IDs → ARO accession, using argNorm's own published matching key (accession:start-end, extracted from the reference ID); (2) CARD's aro_index.tsv maps ARO accession → AMR Gene Family. Chained and hardcoded into this awk map (1,804 entries, see groot_gene_family_map.tsv). Fallback: toupper() for any GROOT hit not in the mapping.",
+            "annotation": "Translates GROOT's ARG-ANNOT gene identifiers into the same CARD AMR gene family vocabulary Branch B uses, so the two methods can be compared at all. The mapping chains argNorm's published ARG-ANNOT to ARO table with CARD's ARO to family table, 1,804 entries. Anything unmapped falls back to its upper-cased name.",
             "content_id": "toolshed.g2.bx.psu.edu/repos/bgruening/text_processing/tp_awk_tool/1.1.2",
             "errors": null,
             "id": 28,
@@ -1012,7 +1012,7 @@
                 }
             },
             "inputs": [],
-            "label": "CARD Family Normalize — Branch A (GROOT)",
+            "label": "CARD Family Normalize, Branch A (GROOT)",
             "name": "Text reformatting with awk",
             "outputs": [
                 {
@@ -1049,7 +1049,7 @@
             "workflow_outputs": []
         },
         "29": {
-            "annotation": "METHOD COMPARISON (Known ARG, Branch A vs B): Join Branch A (GROOT/reads, step 28, col 1 family-normalized) vs Branch B (ABRicate/contigs, step 21, col 1 family-normalized). Unmatched=Yes (-u): ARG families detected by GROOT on raw reads but ABSENT from the assembly-based ABRicate scan = reads-only ARGs. These may reflect low-abundance/low-coverage genes that MEGAHIT failed to assemble into a contig, or genes lost at contig boundaries — a real sensitivity argument for reads-based screening. Compare with step 30 (contigs-only) for the reverse direction.",
+            "annotation": "Families found on the reads but absent from the assembly. These are usually genes too sparsely covered for MEGAHIT to assemble, or genes broken across contig boundaries, and they are the argument for screening reads as well as contigs.",
             "content_id": "join1",
             "errors": null,
             "id": 29,
@@ -1064,7 +1064,7 @@
                 }
             },
             "inputs": [],
-            "label": "Branch A vs B — Reads-only ARGs",
+            "label": "Branch A vs B: reads-only ARGs",
             "name": "Join two Datasets",
             "outputs": [
                 {
@@ -1102,7 +1102,7 @@
             ]
         },
         "30": {
-            "annotation": "METHOD COMPARISON (Known ARG, Branch A vs B): Join Branch B (ABRicate/contigs, step 21) vs Branch A (GROOT/reads, step 28). Unmatched=Yes (-u): ARG families detected in the assembled contigs but ABSENT from the GROOT/reads scan = contigs-only ARGs. These may reflect genes GROOT's LSH-forest index missed (arg-annot database gap or divergent allele) or reads whose k-mer signal was too sparse pre-assembly. Reverse direction of step 29 (reads-only).",
+            "annotation": "The reverse direction: families found in the assembly but absent from the read screen, either because ARG-ANNOT lacks them or because the k-mer signal was too sparse before assembly. Read together with step 29, this pair is the method sensitivity check.",
             "content_id": "join1",
             "errors": null,
             "id": 30,
@@ -1117,7 +1117,7 @@
                 }
             },
             "inputs": [],
-            "label": "Branch A vs B — Contigs-only ARGs",
+            "label": "Branch A vs B: contigs-only ARGs",
             "name": "Join two Datasets",
             "outputs": [
                 {
@@ -1155,7 +1155,7 @@
             ]
         },
         "33": {
-            "annotation": "ZERO-HIT GUARD (Assembly (Branch B)). ABRicate's own summary_table() has a known edge case (github.com/tseemann/abricate, single-input-file 'dutch mode'): the safeguard that initializes an empty row 'so it appears in the report even if 0 genes found' is explicitly skipped in dutch mode (`$data{$fname} = {} unless $dutch_mode`), so a single-file summary with 0 ARG hits degenerates to a bare '#FILE\\tNUM_FOUND' header with NO data row at all. That specific shape (gene/placeholder columns present, 0 data rows) crashes table_compute's downstream transpose+to_csv(quoting=QUOTE_NONE) with '_csv.Error: single empty field record must be quoted' (confirmed by direct local reproduction, 2026-07-11 real-run failure). This step detects that exact degenerate line and rewrites it to '#FILE\\nno_ARGs_detected\\n' (0 gene columns, 1 placeholder row) — the one shape that transposes and writes cleanly. Normal (non-degenerate) input passes through completely unchanged.",
+            "annotation": "A guard for the case where a sample yields no ARG at all. With a single input file ABRicate's summary omits the empty row it would normally write, leaving a header and nothing else, and the transpose that follows fails on it. This step detects that one degenerate shape and replaces it with a placeholder row. Ordinary input passes through unchanged.",
             "content_id": "toolshed.g2.bx.psu.edu/repos/bgruening/text_processing/tp_awk_tool/1.1.2",
             "errors": null,
             "id": 33,
@@ -1166,7 +1166,7 @@
                 }
             },
             "inputs": [],
-            "label": "Zero-hit guard — Assembly (Branch B)",
+            "label": "Zero-hit guard, Branch B",
             "name": "Text reformatting with awk",
             "outputs": [
                 {
@@ -1203,7 +1203,7 @@
             "workflow_outputs": []
         },
         "34": {
-            "annotation": "2026-07-15 fix: actually decompress Pfam-A.hmm.gz. The previous annotation on Step 25 claimed \"HMMER 3.4 handles .gz transparently\" — that was never verified and is wrong. Uses Galaxy's built-in CONVERTER_gz_to_uncompressed (gzip -dcf). [2026-07-17 fix: this hidden converter tool writes its own dynamic output name via a configfile/galaxy.json mechanism (input name minus '.gz' + ' uncompressed'), which overrides workflow-level RenameDatasetAction — confirmed by a real run where the symlink was created as './pfam/Pfam-A.hmm uncompressed' instead of './pfam/Pfam-A.hmm', which BiG-SCAPE's hardcoded hmmpress call then couldn't find. Rename/datatype-change moved to the new pass-through step (Step 35) instead, where RenameDatasetAction is already proven to work reliably elsewhere in this pipeline (e.g. the original __EXTRACT_DATASET__ step).]",
+            "annotation": "Decompresses Pfam-A.hmm.gz. HMMER does not read gzip transparently, and BiG-SCAPE calls hmmpress on the file by name.",
             "content_id": "CONVERTER_gz_to_uncompressed",
             "errors": null,
             "id": 34,
@@ -1237,7 +1237,7 @@
             "workflow_outputs": []
         },
         "35": {
-            "annotation": "Pass-through step whose only purpose is to get a dataset whose name/datatype we can reliably control via post_job_actions (see Step 34 annotation for why the converter's own output can't be renamed directly). Identity awk script ({print}) — does not alter file content.",
+            "annotation": "A pass-through that exists only so the file can be given a stable name and datatype. The converter in the previous step names its own output, which BiG-SCAPE then cannot find. The awk script prints every line unchanged.",
             "content_id": "toolshed.g2.bx.psu.edu/repos/bgruening/text_processing/tp_awk_tool/1.1.2",
             "errors": null,
             "id": 35,
@@ -1292,7 +1292,7 @@
             "workflow_outputs": []
         },
         "36": {
-            "annotation": "2026-07-22 fix: filter out antiSMASH's whole-assembly artifact ('input_tempfile') from the 'genbank' collection before it reaches BiG-SCAPE/ABRicate. [2026-07-23 fix: confirmed via direct Galaxy API inspection (dataset_collections endpoint) that antiSMASH's 'genbank' output is actually collection_type='list:list' — an OUTER level with exactly 1 element (named after the sample, e.g. 'SRR14689470', from implicit collection mapping since MEGAHIT's single-sample output still traces back through Step 1's list:paired wrapping), and an INNER level holding the real per-BGC-region files. The first version of this rule used 'identifier0' (the OUTER, sample-level identifier — identical for every row) instead of 'identifier1' (the INNER, per-region identifier), so every row collapsed to the same identifier and the rule engine kept only one merged element. Fixed to use 'identifier1'.]",
+            "annotation": "Removes the whole-assembly record antiSMASH emits alongside the per-cluster files, which would otherwise reach BiG-SCAPE and Branch C as if it were a cluster. The GenBank output is nested two levels deep, one level per sample and one per cluster, so the rule keys on the inner identifier.",
             "content_id": "__APPLY_RULES__",
             "errors": null,
             "id": 36,
@@ -1321,7 +1321,7 @@
             "workflow_outputs": []
         },
         "37": {
-            "annotation": "PRE-FILTER for antiSMASH only (Branch B ABRicate still uses raw MEGAHIT output unfiltered). MEGAHIT metagenome assemblies contain a huge long tail of very short contigs (~67-72% under 1000bp in this pipeline's real runs) that antiSMASH's own --minlength 1000 would skip anyway, but which still cost parse/gene-finding overhead at scale (GL56 samples: ~800K-1.07M total contigs vs 314K in the original demo run). This step removes them upstream so antiSMASH only ever sees records it would actually analyze, cutting per-record overhead without changing which contigs antiSMASH ultimately scans (matches antiSMASH's own minlength=1000 exactly). Added 2026-08-04 after confirming (via contig header length distribution) that GL56_UP1/UP2's multi-day antiSMASH runtime correlates with 2.7-4x more usable (>=1000bp) contigs than the original run, not a broken tool/server (verified via a live health-check job that completed in 41s).",
+            "annotation": "Keeps only contigs of at least 1 kb before antiSMASH, which is the length antiSMASH itself would skip below. Most contigs in a metagenome assembly are shorter than that, so removing them here changes nothing about which clusters are found and saves a large amount of runtime. Branch B still screens the unfiltered assembly.",
             "content_id": "toolshed.g2.bx.psu.edu/repos/bgruening/text_processing/tp_awk_tool/1.1.2",
             "errors": null,
             "id": 37,
@@ -1369,7 +1369,7 @@
             "workflow_outputs": []
         },
         "38": {
-            "annotation": "NOVEL RESISTANCE GENE DISCOVERY: ML-based ARG prediction (DeepARG v1.0.4) on MEGAHIT contigs from a confirmed antibiotic-exposure environment. Unlike ABRicate/CARD (strict 80% identity+coverage blastn), DeepARG uses a trained neural network over Diamond alignments (--arg-alignment-identity 50, relaxed) to score ARG-likeness. Two outputs: 'ARG' (prob>=0.8, confident calls — validated vanA/U/S/R/RI glycopeptide cluster variants in this environment, 2026-08-06 local test) and 'Potential ARG' (prob<0.8) — genes that don't confidently match a known family but show ARG-like signal: these are the NOVEL CANDIDATE resistance genes this pipeline aims to surface for downstream structural characterization. → IPK2026 #17 Cheminformatics, #18 AI for Drug Discovery.",
+            "annotation": "The step this pipeline exists for. Instead of asking how similar a sequence is to a known gene, DeepARG asks how likely it is to be a resistance gene, scoring Diamond alignments with a trained network at a relaxed identity of 50. Two outputs: confident calls at probability 0.8 or above, and candidates below it. The candidates are sequences that carry resistance-like signal without matching any described family, which is exactly where sequence homology stops being useful and structure has to take over.",
             "content_id": "toolshed.g2.bx.psu.edu/repos/iuc/deeparg_predict/deeparg_predict/1.0.4+galaxy1",
             "errors": null,
             "id": 38,
@@ -1439,7 +1439,7 @@
             ]
         },
         "39": {
-            "annotation": "GENOMIC CONTEXT for novel candidate resistance genes: extracts the FULL CONTIG (not just the matched fragment) for every 'Potential ARG' hit from DeepARG (column 4 = read_id/contig ID), giving the surrounding genomic neighborhood for each candidate. This is the deliverable meant for downstream structural/functional follow-up (docking, AI structure prediction — IPK2026 #17/#18) rather than a final confirmed call.",
+            "annotation": "Extracts the whole contig for every candidate, not just the aligned fragment, so each candidate arrives downstream with its gene neighbourhood attached. This is the deliverable that structure prediction, docking and cheminformatics work from.",
             "content_id": "toolshed.g2.bx.psu.edu/repos/peterjc/seq_filter_by_id/seq_filter_by_id/0.2.9",
             "errors": null,
             "id": 39,
@@ -1497,7 +1497,7 @@
             ]
         },
         "40": {
-            "annotation": "",
+            "annotation": "Collapses Branch B to one row per CARD family before the comparison, so a family found on five contigs counts once.",
             "content_id": "toolshed.g2.bx.psu.edu/repos/bgruening/text_processing/tp_awk_tool/1.1.2",
             "errors": null,
             "id": 40,
@@ -1538,7 +1538,7 @@
             "workflow_outputs": []
         },
         "41": {
-            "annotation": "",
+            "annotation": "Collapses Branch A to one row per CARD family, the same way, so the two branches are compared family against family rather than hit against hit.",
             "content_id": "toolshed.g2.bx.psu.edu/repos/bgruening/text_processing/tp_awk_tool/1.1.2",
             "errors": null,
             "id": 41,
@@ -1590,8 +1590,9 @@
         "ARG",
         "resistome",
         "drug-targets",
+        "wastewater",
         "IPK2026",
-        "PRJNA781406"
+        "PRJEB79372"
     ],
     "uuid": "f2a91566-23e0-4352-a829-dcf757d1c528",
     "version": 1
